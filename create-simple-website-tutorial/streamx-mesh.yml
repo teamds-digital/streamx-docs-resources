@@ -1,0 +1,34 @@
+defaultRegistry: ghcr.io/streamx-dev/streamx-blueprints
+defaultImageTag: 0.0.12-jvm
+tenant: streamx
+
+processing:
+  relay:
+    image: relay-processing-service
+    incoming:
+      incoming-pages:
+        topic: inboxes/pages
+      incoming-assets:
+        topic: inboxes/assets
+      incoming-web-resources:
+        topic: inboxes/web-resources
+    outgoing:
+      outgoing-pages:
+        topic: outboxes/pages
+      outgoing-assets:
+        topic: outboxes/assets
+      outgoing-web-resources:
+        topic: outboxes/web-resources
+
+delivery:
+  web-delivery-service:
+    image: web-delivery-service
+    incoming:
+      pages:
+        topic: outboxes/pages
+      assets:
+        topic: outboxes/assets
+      web-resources:
+        topic: outboxes/web-resources
+    port: 8081
+
