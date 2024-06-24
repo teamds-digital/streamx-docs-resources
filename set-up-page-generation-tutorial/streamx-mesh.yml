@@ -1,0 +1,59 @@
+defaultRegistry: ghcr.io/streamx-dev/streamx-blueprints
+defaultImageTag: 0.0.12-jvm
+tenant: streamx
+
+processing:
+  relay:
+    image: relay-processing-service
+    incoming:
+      incoming-pages:
+        topic: inboxes/pages
+      incoming-page-fragments:
+        topic: inboxes/page-fragments
+      incoming-assets:
+        topic: inboxes/assets
+      incoming-web-resources:
+        topic: inboxes/web-resources
+    outgoing:
+      outgoing-pages:
+        topic: outboxes/pages
+      outgoing-page-fragments:
+        topic: outboxes/page-fragments
+      outgoing-assets:
+        topic: outboxes/assets
+      outgoing-web-resources:
+        topic: outboxes/web-resources
+
+  pages-template-engine-processing-service:
+    image: template-engine-processing-service
+    incoming:
+      data:
+        topic: inboxes/data
+      templates:
+        topic: inboxes/templates
+    outgoing:
+      content:
+        topic: inboxes/pages
+      data-retrigger:
+        topic: inboxes/data
+    environment:
+      MP_MESSAGING_OUTGOING_CONTENT_SCHEMA: page-schema
+      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__TEMPLATE-KEY: template.html
+      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__DATA-KEY-MATCH-PATTERN: product:.*
+      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__OUTPUT-KEY-TEMPLATE: generated/{{id}}.html
+
+delivery:
+  web-delivery-service:
+    image: web-delivery-service
+    incoming:
+      pages:
+        topic: outboxes/pages
+      page-fragments:
+        topic: outboxes/page-fragments
+      assets:
+        topic: outboxes/assets
+      web-resources:
+        topic: outboxes/web-resources
+    port: 8081
+
+
