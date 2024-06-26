@@ -1,5 +1,5 @@
 defaultRegistry: ghcr.io/streamx-dev/streamx-blueprints
-defaultImageTag: 0.0.12-jvm
+defaultImageTag: 0.0.15-jvm
 tenant: streamx
 
 processing:
@@ -8,21 +8,9 @@ processing:
     incoming:
       incoming-pages:
         topic: inboxes/pages
-      incoming-page-fragments:
-        topic: inboxes/page-fragments
-      incoming-assets:
-        topic: inboxes/assets
-      incoming-web-resources:
-        topic: inboxes/web-resources
     outgoing:
       outgoing-pages:
         topic: outboxes/pages
-      outgoing-page-fragments:
-        topic: outboxes/page-fragments
-      outgoing-assets:
-        topic: outboxes/assets
-      outgoing-web-resources:
-        topic: outboxes/web-resources
 
   search-feed-producer:
     image: search-feed-producer-processing-service
@@ -39,12 +27,6 @@ delivery:
     incoming:
       pages:
         topic: outboxes/pages
-      page-fragments:
-        topic: outboxes/page-fragments
-      assets:
-        topic: outboxes/assets
-      web-resources:
-        topic: outboxes/web-resources
     port: 8081
 
   search-delivery-service:
