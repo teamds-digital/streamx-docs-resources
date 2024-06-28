@@ -1,0 +1,39 @@
+defaultRegistry: ghcr.io/streamx-dev/streamx-blueprints
+defaultImageTag: 0.0.15-jvm
+tenant: streamx
+
+processing:
+  relay:
+    image: relay-processing-service
+    incoming:
+      incoming-pages:
+        topic: inboxes/pages
+      incoming-web-resources:
+        topic: inboxes/web-resources
+    outgoing:
+      outgoing-pages:
+        topic: outboxes/pages
+      outgoing-web-resources:
+        topic: outboxes/web-resources
+
+  sitemap-generator:
+    image: sitemap-generator-processing-service
+    incoming:
+      incoming-pages:
+        topic: inboxes/pages
+    outgoing:
+      outgoing-sitemaps:
+        topic: outboxes/web-resources
+    environment:
+      STREAMX_BLUEPRINTS_SITEMAP-GENERATOR-PROCESSING-SERVICE_BASE-URL: http://localhost:8081
+      STREAMX_BLUEPRINTS_SITEMAP-GENERATOR-PROCESSING-SERVICE_OUTPUT-KEY: sitemap.xml
+
+delivery:
+  web-delivery-service:
+    image: web-delivery-service
+    incoming:
+      pages:
+        topic: outboxes/pages
+      web-resources:
+        topic: outboxes/web-resources
+    port: 8081
