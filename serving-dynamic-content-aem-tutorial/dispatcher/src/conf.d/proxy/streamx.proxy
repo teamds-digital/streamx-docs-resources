@@ -1,0 +1,1 @@
+ProxyPassMatch "^/(.*/_fragments/.*\.carousel\.html)$" "http://host.docker.internal:8081/$1"
