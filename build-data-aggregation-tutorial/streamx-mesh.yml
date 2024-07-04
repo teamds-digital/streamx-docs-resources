@@ -1,0 +1,58 @@
+defaultRegistry: ghcr.io/streamx-dev/streamx-blueprints
+defaultImageTag: 0.0.15-jvm
+tenant: streamx
+
+processing:
+  relay:
+    image: relay-processing-service
+    incoming:
+      incoming-pages:
+        topic: inboxes/pages
+    outgoing:
+      outgoing-pages:
+        topic: outboxes/pages
+
+  json-aggregator:
+    image: json-aggregator-processing-service
+    incoming:
+      data:
+        topic: inboxes/data
+      multivalued-data:
+        topic: inboxes/data
+    outgoing:
+      aggregated-data:
+        topic: relays/aggregated-data
+      aggregated-multivalued-data:
+        topic: inboxes/data
+    environment:
+      STREAMX_BLUEPRINTS_JSON_AGGREGATOR_PROCESSING_SERVICE_CONFIGURATIONS[0]_MASTER_TYPE: product
+      STREAMX_BLUEPRINTS_JSON_AGGREGATOR_PROCESSING_SERVICE_CONFIGURATIONS[0]_OPTIONAL_TYPES: price,reviews
+      STREAMX_BLUEPRINTS_JSON_AGGREGATOR_PROCESSING_SERVICE_CONFIGURATIONS[0]_OUTPUT_TYPE: aggregated_product
+      STREAMX_BLUEPRINTS_JSON_AGGREGATOR_PROCESSING_SERVICE_CONFIGURATIONS[1]_MASTER_TYPE: review
+      STREAMX_BLUEPRINTS_JSON_AGGREGATOR_PROCESSING_SERVICE_CONFIGURATIONS[1]_OUTPUT_TYPE: reviews
+
+  pages-template-engine-processing-service:
+    image: template-engine-processing-service
+    incoming:
+      data:
+        topic: relays/aggregated-data
+      templates:
+        topic: inboxes/templates
+    outgoing:
+      content:
+        topic: inboxes/pages
+      data-retrigger:
+        topic: relays/aggregated-data
+    environment:
+      MP_MESSAGING_OUTGOING_CONTENT_SCHEMA: page-schema
+      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__TEMPLATE-KEY: template.html
+      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__DATA-KEY-MATCH-PATTERN: aggregated_product:.*
+      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__OUTPUT-KEY-TEMPLATE: generated/{{id}}.html
+
+delivery:
+  web-delivery-service:
+    image: web-delivery-service
+    incoming:
+      pages:
+        topic: outboxes/pages
+    port: 8081
