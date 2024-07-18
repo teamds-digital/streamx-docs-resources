@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>{{name}} # {{id}}</title>
+</head>
+<body>
+
+<h1>{{name}}</h1>
+
+{% if price is empty %}
+  <b>Price not available...</b>
+{% else %}
+  <b>Price: {{price.value}}</b>
+{% endif %}
+
+{% if reviews is empty %}
+  <h2>No reviews...</h2>
+{% else %}
+  <h2>Here are some reviews:</h2>
+  {% for i in range(0, reviews|length - 1) %}
+    <blockquote> {{ reviews[i].value }}</blockquote>
+  {% endfor %}
+{% endif %}
+
+</body>
+</html>
