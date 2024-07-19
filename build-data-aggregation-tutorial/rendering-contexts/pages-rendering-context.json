@@ -1,0 +1,6 @@
+{
+  "rendererKey": { "string": "template.html" },
+  "dataKeyMatchPattern": { "string": "aggregated_product:.*" },
+  "outputKeyTemplate": { "string": "generated/{{id}}.html" },
+  "outputType": { "dev.streamx.blueprints.data.RenderingContext.OutputType": "PAGE" }
+}

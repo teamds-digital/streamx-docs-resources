@@ -1,5 +1,5 @@
 defaultRegistry: ghcr.io/streamx-dev/streamx-blueprints
-defaultImageTag: 0.0.12-jvm
+defaultImageTag: 0.0.16-jvm
 tenant: streamx
 
 processing:
@@ -8,8 +8,8 @@ processing:
     incoming:
       incoming-pages:
         topic: inboxes/pages
-      incoming-page-fragments:
-        topic: inboxes/page-fragments
+      incoming-fragments:
+        topic: inboxes/fragments
       incoming-assets:
         topic: inboxes/assets
       incoming-web-resources:
@@ -17,30 +17,33 @@ processing:
     outgoing:
       outgoing-pages:
         topic: outboxes/pages
-      outgoing-page-fragments:
-        topic: outboxes/page-fragments
+      outgoing-fragments:
+        topic: outboxes/fragments
       outgoing-assets:
         topic: outboxes/assets
       outgoing-web-resources:
         topic: outboxes/web-resources
 
-  pages-template-engine-processing-service:
-    image: template-engine-processing-service
+  rendering-engine-processing-service:
+    image: rendering-engine-processing-service
     incoming:
       data:
         topic: inboxes/data
-      templates:
-        topic: inboxes/templates
+      renderers:
+        topic: inboxes/renderers
+      rendering-contexts:
+        topic: inboxes/rendering-contexts
+      incoming-rendering-requests:
+        topic: relays/rendering-requests
     outgoing:
-      content:
+      outgoing-rendering-requests:
+        topic: relays/rendering-requests
+      pages:
         topic: inboxes/pages
-      data-retrigger:
-        topic: inboxes/data
-    environment:
-      MP_MESSAGING_OUTGOING_CONTENT_SCHEMA: page-schema
-      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__TEMPLATE-KEY: template.html
-      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__DATA-KEY-MATCH-PATTERN: product:.*
-      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__OUTPUT-KEY-TEMPLATE: generated/{{id}}.html
+      fragments:
+        topic: inboxes/fragments
+      compositions:
+        topic: inboxes/compositions
 
 delivery:
   web-delivery-service:
@@ -48,8 +51,8 @@ delivery:
     incoming:
       pages:
         topic: outboxes/pages
-      page-fragments:
-        topic: outboxes/page-fragments
+      fragments:
+        topic: outboxes/fragments
       assets:
         topic: outboxes/assets
       web-resources:
