@@ -1,0 +1,37 @@
+defaultRegistry: ghcr.io/streamx-dev/streamx-blueprints
+defaultImageTag: 0.0.15-jvm
+tenant: streamx
+
+processing:
+  relay:
+    image: relay-processing-service
+    incoming:
+      incoming-pages:
+        topic: inboxes/pages
+    outgoing:
+      outgoing-pages:
+        topic: outboxes/pages
+
+  search-feed-producer:
+    image: search-feed-producer-processing-service
+    incoming:
+      pages:
+        topic: inboxes/pages
+    outgoing:
+      search-feeds:
+        topic: outboxes/search-feeds
+
+delivery:
+  web-delivery-service:
+    image: web-delivery-service
+    incoming:
+      pages:
+        topic: outboxes/pages
+    port: 8081
+
+  search-delivery-service:
+    image: search-delivery-service
+    incoming:
+      search-feeds:
+        topic: outboxes/search-feeds
+    port: 8082
