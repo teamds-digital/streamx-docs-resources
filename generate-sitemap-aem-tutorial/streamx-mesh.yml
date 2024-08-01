@@ -1,5 +1,5 @@
 defaultRegistry: ghcr.io/streamx-dev/streamx-blueprints
-defaultImageTag: 0.0.15-jvm
+defaultImageTag: 0.0.16-jvm
 tenant: streamx
 
 processing:
@@ -12,14 +12,17 @@ processing:
       outgoing-pages:
         topic: outboxes/pages
 
-  search-feed-producer:
-    image: search-feed-producer-processing-service
+  sitemap-generator:
+    image: sitemap-generator-processing-service
     incoming:
-      pages:
+      incoming-pages:
         topic: inboxes/pages
     outgoing:
-      search-feeds:
-        topic: outboxes/search-feeds
+      outgoing-sitemaps:
+        topic: outboxes/web-resources
+    environment:
+      STREAMX_BLUEPRINTS_SITEMAP-GENERATOR-PROCESSING-SERVICE_BASE-URL: http://localhost:8081
+      STREAMX_BLUEPRINTS_SITEMAP-GENERATOR-PROCESSING-SERVICE_OUTPUT-KEY: sitemap.xml
 
 delivery:
   web-delivery-service:
@@ -27,11 +30,6 @@ delivery:
     incoming:
       pages:
         topic: outboxes/pages
+      web-resources:
+        topic: outboxes/web-resources
     port: 8081
-
-  search-delivery-service:
-    image: search-delivery-service
-    incoming:
-      search-feeds:
-        topic: outboxes/search-feeds
-    port: 8082
