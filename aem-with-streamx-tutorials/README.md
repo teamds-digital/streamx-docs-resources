@@ -53,3 +53,47 @@ following system properties to Maven
 | aem.port       | 4502          | -Daem.port=5502           |
 | vault.user     | admin         | -Dvault.user=admin123     |
 | vault.password | admin         | -Dvault.password=admin123 |
+
+
+# StreamX OSGi bundles
+
+* StreamX Connectors
+
+| Dependency                                           | Version    |
+|------------------------------------------------------|------------|
+| `+dev.streamx:ingestion-client:jar+`                 | `+0.0.7+`  |
+| `+dev.streamx:streamx-connector-sling:jar+`          | `+0.0.5+`  |
+| `+dev.streamx:streamx-connector-aem:jar+`            | `+0.0.3+`  |
+| `+dev.streamx:streamx-connector-aem-blueprints:jar+` | `+0.0.3+`  |
+
+* StreamX Connectors' dependencies
+
+| Dependency                                              | Version     |
+|---------------------------------------------------------|-------------|
+| `+org.apache.avro:avro:jar+`                            | `+1.11.3+`  |
+| `+com.fasterxml.jackson.core:jackson-annotations:jar+`  | `+2.15.3+`  |
+| `+com.fasterxml.jackson.core:jackson-core:jar+`         | `+2.15.3+`  |
+| `+com.fasterxml.jackson.core:jackson-databind:jar+`     | `+2.15.3+`  |
+| `+org.jsoup:jsoup:jar+`                                 | `+1.16.1+`  |
+
+# StreamX OSGi configuration
+
+The _OSGi_ configuration in the package contains the appropriate configuration
+for default _StreamX Service Mesh_ installations for _We.Retail sample application_,
+so that content replicated by activation will also be ingested into StreamX.
+The following _OSGi_ configuration entries has been created
+under `+/apps/streamx-aem-tutorials/osgiconfig/config.author+`
+(http://localhost:4502/crx/de/index.jsp#/apps/streamx-aem-tutorials/osgiconfig/config.author)[AEM author - CRXDE]
+
+| Configuration                                                                                           | Property             | Description                                                                | Default value                                |
+|---------------------------------------------------------------------------------------------------------|----------------------|----------------------------------------------------------------------------|----------------------------------------------|
+| `dev.streamx.sling.connector.impl.StreamxPublicationServiceImpl.cfg.json`                               | `enabled`            | Enables _StreamX Connector_ to ingest content into _StreamX_               | `true`                                       |
+| `dev.streamx.sling.connector.impl.StreamxClientFactoryImpl.cfg.json`                                    | `streamxUrl`         | Defines where the _StreamX REST Ingestion_ service listens                 | `http://localhost:8080`                      |
+| `dev.streamx.aem.connector.blueprints.PagePublicationHandler.cfg.json`                                  | `pages.path.regexp`  |                                                                            | Handles _We.Retail_ pages during publication |`^/content/we-retail/.+`|
+| `dev.streamx.aem.connector.blueprints.AssetPublicationHandler.cfg.json`                                 | `assets.path.regexp` | Handles _We.Retail_ assets during publication                              | `^/content/dam/we-retail/.+`                 |
+| `org.apache.sling.jcr.base.internal.LoginAdminWhitelist.fragment-streamx-connector-blueprints.cfg.json` | `whitelist.bundles`  | Enables `+streamx-connector-aem-blueprints+` to create administrative user | `streamx-connector-aem-blueprints`           |
+| `org.apache.sling.jcr.base.internal.LoginAdminWhitelist.fragment-streamx-connector-blueprints.cfg.json` | `whitelist.name`     | Enables `+streamx-connector-aem-blueprints+` to create administrative user | `streamx-connector-aem-blueprints`           |
+
+
+If you prefer, you can also view the configuration in http://localhost:4502/system/console/configMgr[AEM author - Adobe Experience Manager Web Console Configuration]
+by searching for `+dev.streamx+`.
