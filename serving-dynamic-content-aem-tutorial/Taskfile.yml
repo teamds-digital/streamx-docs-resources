@@ -1,0 +1,262 @@
+# Task tool documentation:
+# 1) Basics: https://taskfile.dev/usage
+# 2) Naming conventions: https://taskfile.dev/styleguide
+
+version: '3'
+
+env:
+  AEM_ENV: '{{.AEM_ENV | default "local"}}'
+  AEM_INSTANCE_PROCESSING_MODE: auto
+  AEM_OUTPUT_VALUE: NONE
+
+dotenv:
+  - '.env'              # VCS-ignored, user-specific
+  - '.env.{{.AEM_ENV}}' # VCS-ignored, env-specific
+  - '{{.AEM_ENV}}.env'  # VCS-tracked, env-specific
+
+tasks:
+  init:
+    desc: initialize project
+    cmds:
+      - sh aemw init
+      - sh aemw instance init
+
+  status:
+    desc: check status of AEM instances and dispatcher
+    cmds:
+      - task: aem:status
+      - task: dispatcher:status
+
+  check:
+    desc: check health of AEM instances and dispatcher
+    cmds:
+      - task: aem:check
+      - task: dispatcher:check
+
+  setup:
+    desc: setup AEM instances and dispatcher
+    cmds:
+      - task: aem:setup
+      - task: dispatcher:setup
+      - task: aem:check
+      - task: dispatcher:check
+
+  resetup:
+    desc: destroy then setup again AEM instances and dispatcher
+    cmds:
+      - task: destroy
+      - task: setup
+
+  start:
+    desc: start AEM instances and dispatcher
+    aliases: [ up ]
+    cmds:
+      - task: aem:up
+      - task: dispatcher:up
+
+  stop:
+    desc: stop AEM instances and dispatcher
+    aliases: [ down ]
+    cmds:
+      - task: dispatcher:down
+      - task: aem:down
+
+  restart:
+    desc: restart AEM instances and dispatcher
+    cmds:
+      - task: aem:down
+      - task: aem:up
+      - task: dispatcher:down
+      - task: dispatcher:up
+
+  destroy:
+    desc: destroy AEM instances and dispatcher
+    prompt: This will permanently delete all configured AEM instances and their data. Continue?
+    cmds:
+      - task: stop
+      - task: aem:destroy
+      - task: dispatcher:destroy
+
+  aem:setup:
+    desc: start and provision AEM instances
+    cmds:
+      - task: aem:start
+      - task: aem:provision
+
+  aem:start:
+    desc: start AEM instances
+    aliases: [ aem:up ]
+    cmd: sh aemw instance launch
+
+  aem:status:
+    desc: check status of AEM instances
+    env:
+      AEM_OUTPUT_VALUE: ALL
+    cmd: sh aemw instance status
+
+  aem:provision:
+    desc: provision AEM instances by installing packages and applying configurations
+    aliases: [ aem:configure ]
+    cmds:
+      - task: aem:provision:repl-agent-publish
+      - task: aem:provision:repl-agent-flush
+      - task: aem:provision:crx
+
+  aem:provision:repl-agent-publish:
+    desc: configure replication agent on AEM author instance
+    internal: true
+    cmd: |
+      PROPS="
+      enabled: true
+      transportUri: {{.AEM_PUBLISH_HTTP_URL}}/bin/receive?sling:authRequestLogin=1
+      transportUser: {{.AEM_PUBLISH_USER}}  
+      transportPassword: {{.AEM_PUBLISH_PASSWORD}}  
+      userId: admin
+      "
+      echo "$PROPS" | sh aemw repl agent setup -A --location "author" --name "publish"
+
+  aem:provision:repl-agent-flush:
+    desc: configure replication agent on AEM publish instance
+    internal: true
+    cmd: |
+      PROPS="
+      enabled: true
+      transportUri: {{.AEM_DISPATCHER_HTTP_URL }}/dispatcher/invalidate.cache
+      protocolHTTPHeaders:
+        - 'CQ-Action: {action}'
+        - 'CQ-Handle: {path}'
+        - 'CQ-Path: {path}'
+        - 'Host: publish'
+        "
+      echo "$PROPS" | sh aemw repl agent setup -P --location "publish" --name "flush"
+
+  aem:provision:crx:
+    desc: enable CRX/DE on AEM instances
+    internal: true
+    cmd: 'sh aemw osgi config save --pid "org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet" --input-string "alias: /crx/server"'
+
+  aem:destroy:
+    desc: destroy AEM instances
+    deps: [ aem:stop ]
+    cmd: sh aemw instance destroy
+
+  aem:stop:
+    desc: stop AEM instances
+    aliases: [ aem:down ]
+    cmd: sh aemw instance stop
+
+  aem:check:
+    deps: [ aem:author:check, aem:publish:check ]
+
+  aem:author:check:
+    desc: check health of AEM author instance
+    cmds:
+      - sleep 3
+      - curl -s -u "{{.AEM_AUTHOR_USER}}:{{.AEM_AUTHOR_PASSWORD}}" "{{.AEM_AUTHOR_HTTP_URL}}/libs/granite/core/content/login.html" | grep -q "QUICKSTART_HOMEPAGE"
+      - curl -s -u "{{.AEM_AUTHOR_USER}}:{{.AEM_AUTHOR_PASSWORD}}" "{{.AEM_AUTHOR_HTTP_URL}}/etc/replication/agents.author/publish.test.html" | grep -q "Replication (TEST) of /content successful"
+
+  aem:publish:check:
+    desc: check health of AEM publish instance
+    cmds:
+      - sleep 3
+      - curl -s -u "{{.AEM_PUBLISH_USER}}:{{.AEM_PUBLISH_PASSWORD}}" "{{.AEM_PUBLISH_HTTP_URL}}/libs/granite/core/content/login.html" | grep -q "QUICKSTART_HOMEPAGE"
+      - curl -s -u "{{.AEM_PUBLISH_USER}}:{{.AEM_PUBLISH_PASSWORD}}" "{{.AEM_PUBLISH_HTTP_URL}}/etc/replication/agents.publish/flush.test.html" | grep -q "Replication (TEST) of /content successful"
+
+  dispatcher:setup:
+    desc: setup AEM dispatcher
+    cmds:
+      - task: dispatcher:start
+      - task: dispatcher:status
+
+  dispatcher:resetup:
+    desc: destroy then setup again AEM dispatcher
+    cmds:
+      - task: dispatcher:destroy
+      - task: dispatcher:setup
+
+  dispatcher:build:
+    desc: build AEM dispatcher image
+    dir: dispatcher
+    cmds:
+      # dereference symbolic links causing problems on Windows
+      - rm -fr home/src && mkdir -p home && cp -rL src home/src
+      # enforce typical architecture to avoid problems on M1/ARM Mac
+      - docker build --platform linux/amd64 -t acme/aem-ams/dispatcher-publish .
+
+  dispatcher:test:
+    desc: test AEM dispatcher image
+    dir: dispatcher
+    cmd: docker run --rm -it --entrypoint bash acme/aem-ams/dispatcher-publish:latest
+
+  dispatcher:start:
+    desc: start AEM dispatcher using custom image
+    aliases: [ dispatcher:up ]
+    deps: [ dispatcher:build ]
+    dir: dispatcher
+    cmds:
+      - mkdir -p home/docker/httpd/logs home/docker/httpd/cache/author home/docker/httpd/cache/publish
+      - docker compose up -d
+
+  dispatcher:stop:
+    desc: stop AEM dispatcher
+    aliases: [ dispatcher:down ]
+    dir: dispatcher
+    cmd: docker compose down
+
+  dispatcher:restart:
+    desc: restart AEM dispatcher
+    cmds:
+      - task: dispatcher:stop
+      - task: dispatcher:start
+
+  dispatcher:status:
+    desc: check status of AEM dispatcher
+    dir: dispatcher
+    cmds:
+      - docker compose ps
+      - docker compose logs --tail 20
+
+  dispatcher:login:
+    desc: login to AEM dispatcher shell
+    cmd: docker exec -it dispatcher bash
+    ignore_error: true
+
+  dispatcher:destroy:
+    desc: destroy AEM dispatcher
+    dir: dispatcher
+    cmds:
+      - docker compose rm -fsv
+      - rm -fr target/docker target/src
+
+  dispatcher:hosts:
+    desc: add AEM dispatcher domains to hosts file
+    cmds:
+      - task: dispatcher:hosts:windows
+      - task: dispatcher:hosts:darwin
+      - task: dispatcher:hosts:linux
+
+  dispatcher:hosts:windows:
+    platforms: [ windows ]
+    status:
+      - cat C:/Windows/System32/drivers/etc/hosts | grep -qxF '{{.AEM_DISPATCHER_IP}} {{.AEM_DISPATCHER_DOMAINS}}  '
+    cmd: powershell -command "Start-Process cmd -ArgumentList \"/C echo "{{.AEM_DISPATCHER_IP}} {{.AEM_DISPATCHER_DOMAINS}}" >> C:\Windows\System32\drivers\etc\hosts\" -Verb runas"
+
+  dispatcher:hosts:darwin:
+    platforms: [ darwin ]
+    status:
+      - cat /etc/hosts | grep -qxF '{{.AEM_DISPATCHER_IP}} {{.AEM_DISPATCHER_DOMAINS}}'
+    cmd: osascript -e "do shell script \"echo '{{.AEM_DISPATCHER_IP}} {{.AEM_DISPATCHER_DOMAINS}}' >> /etc/hosts\" with prompt \"AEM - Add domains to host file\" with administrator privileges"
+
+  dispatcher:hosts:linux:
+    platforms: [ linux ]
+    status:
+      - cat /etc/hosts | grep -qxF '{{.AEM_DISPATCHER_IP}} {{.AEM_DISPATCHER_DOMAINS}}'
+    cmd: sudo echo '{{.AEM_DISPATCHER_IP}} {{.AEM_DISPATCHER_DOMAINS}}' >> /etc/hosts
+
+  dispatcher:check:
+    desc: check health of AEM dispatcher
+    deps: [ dispatcher:hosts ]
+    cmds:
+      - curl "http://{{.AEM_DISPATCHER_DOMAIN}}" -s -o /dev/null || true # warmup
+      - sleep 3
+      - curl "http://{{.AEM_DISPATCHER_DOMAIN}}" -s -o /dev/null -w "%{http_code}" | grep -q 200

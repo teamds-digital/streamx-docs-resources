@@ -1,0 +1,6 @@
+{
+  "rendererKey": { "string": "carousel.html" },
+  "dataKeyMatchPattern": { "string": "collected:products:.*" },
+  "outputKeyTemplate": { "string": "published/weretail/_fragments/{{key}}.carousel.html" },
+  "outputType": { "dev.streamx.blueprints.data.RenderingContext.OutputType": "FRAGMENT" }
+}

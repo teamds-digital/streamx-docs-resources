@@ -1,0 +1,67 @@
+<div class="we-carousel">
+    <div class="cmp-carousel" data-cmp-is="carousel" data-cmp-delay="5000">
+        <div class="cmp-carousel__content">
+            {% for i in range(0, values|length - 1) %}
+            <div role="tabpanel"
+                 class="cmp-carousel__item {% if loop.index == 0 %}cmp-carousel__item--active{% endif %}"
+                 data-cmp-hook-carousel="item" aria-hidden="{% if loop.index == 0 %}false{% else %}true{% endif %}">
+                <div class="teaser we-Teaser">
+                    <div class="cmp-teaser">
+                        <div class="cmp-teaser__image">
+                            <div data-cmp-src="{{ values[i].mainImage }}"
+                                 data-title="{{ values[i].name }}"
+                                 class="cmp-image" itemscope="" itemtype="http://schema.org/ImageObject">
+                                <img src="{{ values[i].mainImage }}"
+                                     class="cmp-image__image" itemprop="contentUrl" data-cmp-hook-image="image"
+                                     alt="{{ values[i].name }}" title="{{ values[i].name }}">
+                                <meta itemprop="caption" content="{{ values[i].name }}">
+                            </div>
+                        </div>
+                        <div class="cmp-teaser__content">
+                            <h2 class="cmp-teaser__title">
+                                <a class="cmp-teaser__title-link">
+                                    {{ values[i].name | abbreviate(40)}}
+                                </a>
+                            </h2>
+                            <div class="cmp-teaser__description">
+                                <p>{{ values[i].category }}<br>{{ values[i].type }}<br> From &dollar;{{ values[i].price }}
+                                </p>
+                            </div>
+                            <div class="cmp-teaser__action-container">
+                                <a class="cmp-teaser__action-link">
+                                    Buy now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="cmp-carousel__actions">
+                <button role="button" class="cmp-carousel__action cmp-carousel__action--previous"
+                        data-cmp-hook-carousel="previous" aria-label="Previous">
+                    <span class="cmp-carousel__action-icon"></span>
+                    <span class="cmp-carousel__action-text">Previous</span>
+                </button>
+                <button role="button" class="cmp-carousel__action cmp-carousel__action--next"
+                        data-cmp-hook-carousel="next" aria-label="Next">
+                    <span class="cmp-carousel__action-icon"></span>
+                    <span class="cmp-carousel__action-text">Next</span>
+                </button>
+            </div>
+
+            <ol role="tablist" class="cmp-carousel__indicators" data-cmp-hook-carousel="indicators">
+                {% for i in range(0, values|length - 1) %}
+                <li role="tab"
+                    class="cmp-carousel__indicator {% if loop.index == 0 %}cmp-carousel__indicator--active{% endif %}"
+                    data-cmp-hook-carousel="indicator"
+                    aria-selected="{% if loop.index == 0 %}true{% else %}false{% endif %}"
+                    tabindex="{% if loop.index == 0 %}0{% else %}-1{% endif %}">
+                    {{ values[i].name | abbreviate(40)}}
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+    </div>
+</div>

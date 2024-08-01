@@ -1,5 +1,5 @@
 defaultRegistry: ghcr.io/streamx-dev/streamx-blueprints
-defaultImageTag: 0.0.15-jvm
+defaultImageTag: 0.0.16-jvm
 tenant: streamx
 
 processing:
@@ -31,23 +31,22 @@ processing:
       STREAMX_BLUEPRINTS_JSON_AGGREGATOR_PROCESSING_SERVICE_CONFIGURATIONS[1]_MASTER_TYPE: review
       STREAMX_BLUEPRINTS_JSON_AGGREGATOR_PROCESSING_SERVICE_CONFIGURATIONS[1]_OUTPUT_TYPE: reviews
 
-  pages-template-engine-processing-service:
-    image: template-engine-processing-service
+  rendering-engine-processing-service:
+    image: rendering-engine-processing-service
     incoming:
       data:
         topic: relays/aggregated-data
-      templates:
-        topic: inboxes/templates
+      renderers:
+        topic: inboxes/renderers
+      rendering-contexts:
+        topic: inboxes/rendering-contexts
+      incoming-rendering-requests:
+        topic: relays/rendering-requests
     outgoing:
-      content:
+      outgoing-rendering-requests:
+        topic: relays/rendering-requests
+      pages:
         topic: inboxes/pages
-      data-retrigger:
-        topic: relays/aggregated-data
-    environment:
-      MP_MESSAGING_OUTGOING_CONTENT_SCHEMA: page-schema
-      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__TEMPLATE-KEY: template.html
-      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__DATA-KEY-MATCH-PATTERN: aggregated_product:.*
-      STREAMX_BLUEPRINTS_TEMPLATE-ENGINE-PROCESSING-SERVICE_CONFIGURATIONS_0__OUTPUT-KEY-TEMPLATE: generated/{{id}}.html
 
 delivery:
   web-delivery-service:
